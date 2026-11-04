@@ -3,10 +3,16 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { hasRedis, hit, redis } from "./redis";
 
 const COOKIE = "bm_admin";
 const MAX_AGE = 60 * 60 * 12; // 12 horas
 export const LOGIN_PATH = "/superadmindev";
+
+/** ¿Están puestas las variables del panel? (ADMIN_USER, ADMIN_PASSWORD, SESSION_SECRET) */
+export function isConfigured() {
+  return Boolean(process.env.ADMIN_USER && process.env.ADMIN_PASSWORD && (process.env.SESSION_SECRET?.length ?? 0) >= 32);
+}
 
 function secret() {
   const s = process.env.SESSION_SECRET;
@@ -51,7 +57,7 @@ export async function destroySession() {
 export async function getSession(): Promise<{ user: string } | null> {
   await connection(); // siempre en el momento de la visita, nunca prerenderizado
   const raw = (await cookies()).get(COOKIE)?.value;
-  if (!raw) return null;
+  if (!raw || !isConfigured()) return null;
   const [payload, sig] = raw.split(".");
   if (!payload || !sig || !safeEqual(sig, sign(payload))) return null;
   try {
@@ -70,20 +76,25 @@ export async function requireAdmin() {
   return s;
 }
 
-// ── Freno de intentos fallidos (en memoria, por IP) ──
+// ── Freno de intentos fallidos (por IP) ──
+// Con Redis el contador se comparte entre servidores (Vercel); si no, va en memoria.
 const attempts = new Map<string, { count: number; until: number }>();
 const MAX_TRIES = 5;
-const LOCK_MS = 10 * 60 * 1000;
+const LOCK_SECONDS = 10 * 60;
+const failKey = (ip: string) => `bomboncita:login-fail:${ip}`;
 
-export function isLocked(ip: string) {
+export async function isLocked(ip: string) {
+  if (hasRedis) return Number((await redis<string | null>("GET", failKey(ip))) ?? 0) >= MAX_TRIES;
   const a = attempts.get(ip);
   return !!a && a.count >= MAX_TRIES && a.until > Date.now();
 }
-export function registerFail(ip: string) {
+export async function registerFail(ip: string) {
+  if (hasRedis) return void (await hit(failKey(ip), LOCK_SECONDS));
   const a = attempts.get(ip);
   const count = a && a.until > Date.now() ? a.count + 1 : 1;
-  attempts.set(ip, { count, until: Date.now() + LOCK_MS });
+  attempts.set(ip, { count, until: Date.now() + LOCK_SECONDS * 1000 });
 }
-export function clearFails(ip: string) {
+export async function clearFails(ip: string) {
+  if (hasRedis) return void (await redis("DEL", failKey(ip)));
   attempts.delete(ip);
 }

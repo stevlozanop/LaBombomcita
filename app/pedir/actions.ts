@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { newId, updateDb, whatsappUrl, type Order } from "@/lib/db";
 import { money } from "@/lib/format";
+import { hasRedis, hit } from "@/lib/redis";
 
 export type OrderInput = {
   items: { id: string; qty: number }[];
@@ -19,8 +20,10 @@ export type OrderResult = { ok: true; code: string; url: string } | { ok: false;
 const text = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
 
 // Límite simple: máx. 8 pedidos cada 10 minutos por IP
+// (con Redis el contador se comparte entre servidores; si no, va en memoria)
 const recent = new Map<string, number[]>();
-function tooMany(ip: string) {
+async function tooMany(ip: string) {
+  if (hasRedis) return (await hit(`bomboncita:orders:${ip}`, 600)) > 8;
   const now = Date.now();
   const list = (recent.get(ip) ?? []).filter((t) => now - t < 10 * 60 * 1000);
   list.push(now);
@@ -31,7 +34,7 @@ function tooMany(ip: string) {
 export async function createOrder(input: OrderInput): Promise<OrderResult> {
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0].trim() || "local";
-  if (tooMany(ip)) return { ok: false, error: "Hiciste muchos pedidos seguidos. Intenta en unos minutos." };
+  if (await tooMany(ip)) return { ok: false, error: "Hiciste muchos pedidos seguidos. Intenta en unos minutos." };
 
   const name = text(input.name, 60);
   const phone = text(input.phone, 20).replace(/[^\d+]/g, "");

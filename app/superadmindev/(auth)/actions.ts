@@ -7,6 +7,7 @@ import {
   clearFails,
   createSession,
   destroySession,
+  isConfigured,
   isLocked,
   registerFail,
 } from "@/lib/auth";
@@ -18,20 +19,22 @@ export async function login(_: LoginState, form: FormData): Promise<LoginState> 
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0].trim() || h.get("x-real-ip") || "local";
 
-  if (isLocked(ip)) return { error: "Demasiados intentos. Espera 10 minutos." };
+  if (!isConfigured()) return { error: "El panel no está configurado: faltan ADMIN_USER, ADMIN_PASSWORD o SESSION_SECRET." };
+  if (await isLocked(ip)) return { error: "Demasiados intentos. Espera 10 minutos." };
 
   const user = String(form.get("user") ?? "").trim().slice(0, 100);
   const password = String(form.get("password") ?? "").slice(0, 200);
 
   if (!checkCredentials(user, password)) {
-    registerFail(ip);
+    await registerFail(ip);
     await new Promise((r) => setTimeout(r, 600)); // frena ataques de fuerza bruta
     return { error: "Usuario o contraseña incorrectos.", user };
   }
 
-  clearFails(ip);
+  await clearFails(ip);
   await createSession(user);
-  await updateDb(() => {}, `Inicio de sesión de ${user}`);
+  // Registrar el acceso no debe impedir entrar si la base de datos falla
+  await updateDb(() => {}, `Inicio de sesión de ${user}`).catch(() => {});
   redirect("/superadmindev/resumen");
 }
 

@@ -32,4 +32,12 @@ Hecha con Next.js 16, Tailwind CSS 4 y HeroUI v3.
 
 Los datos (carta, horario, pedidos) se guardan en `data/db.json`. Ese archivo se crea solo la primera vez a partir de `lib/seed.ts` y no se sube al repositorio porque contiene datos de clientes.
 
-Este almacenamiento funciona en local o en un servidor propio (VPS). En un hosting sin disco persistente, como Vercel, habría que cambiarlo por una base de datos (por ejemplo, Supabase).
+## Publicar en Vercel
+
+En Vercel no se puede escribir en disco, así que los datos se guardan en **Upstash Redis**:
+
+1. En el proyecto de Vercel: **Storage → Create Database → Upstash (Redis)** y conéctalo al proyecto. Vercel agrega solo las variables `KV_REST_API_URL` y `KV_REST_API_TOKEN`.
+2. En **Settings → Environment Variables** agrega `ADMIN_USER`, `ADMIN_PASSWORD` y `SESSION_SECRET` (un texto aleatorio de al menos 32 caracteres; puedes generarlo con `openssl rand -hex 32`).
+3. Vuelve a publicar desde **Deployments → Redeploy**.
+
+La primera vez la base de datos se llena con los datos de `lib/seed.ts`. Si Redis no está conectado, la web se ve con esos datos pero el panel avisa que no se pueden guardar cambios.

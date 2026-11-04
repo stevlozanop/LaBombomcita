@@ -3,9 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, CircleQuestion, Clock, Database, ListUl, Lock, Receipt, Shield } from "@gravity-ui/icons";
-import { getSession } from "@/lib/auth";
+import { getSession, isConfigured } from "@/lib/auth";
 import { getPublicData } from "@/lib/public-data";
 import { btn, chip } from "@/lib/ui";
+import { Alert } from "@heroui/react";
 import salon from "@/public/img/local/salon.webp";
 import LoginForm from "./LoginForm";
 
@@ -99,6 +100,18 @@ export default async function LoginPage() {
             <p className="text-sm font-semibold text-muted">Superadmin</p>
             <h2 className="display mt-1 text-4xl sm:text-5xl">Inicia sesión</h2>
             <p className="mt-3 text-muted">Ingresa con tu cuenta de administrador para gestionar el local.</p>
+
+            {!isConfigured() && (
+              <Alert status="warning" className="mt-6">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>El panel aún no está configurado</Alert.Title>
+                  <Alert.Description>
+                    Faltan las variables ADMIN_USER, ADMIN_PASSWORD y SESSION_SECRET en el servidor.
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert>
+            )}
 
             <div className="mt-8">
               <LoginForm />
