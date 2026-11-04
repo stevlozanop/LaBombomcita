@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# datos del panel (pedidos y clientes)
+/data/
+!.env.example
+
+# configuración local de herramientas
+/.claude/

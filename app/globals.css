@@ -1,26 +1,104 @@
 @import "tailwindcss";
+@import "@heroui/styles";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── Tema de HeroUI con los colores de La Bomboncita ──────────────
+   Amarillo = color principal (accent), verde = texto y detalles,
+   blanco = fondos. HeroUI cambia solo al tema oscuro con la clase .dark */
+:root,
+.light {
+  --radius: 0.875rem;
+
+  --accent: oklch(0.87 0.17 95);
+  --accent-foreground: oklch(0.27 0.06 155);
+
+  --background: oklch(0.985 0.006 100);
+  --foreground: oklch(0.27 0.06 155);
+  --surface: oklch(1 0 0);
+  --overlay: oklch(1 0 0);
+  --muted: oklch(0.5 0.035 150);
+  --default: oklch(0.95 0.012 110);
+  --default-foreground: oklch(0.27 0.06 155);
+
+  --success: oklch(0.55 0.14 150);
+  --success-foreground: oklch(1 0 0);
+
+  --border: oklch(0.9 0.012 120);
+  --separator: oklch(0.92 0.01 120);
+  --focus: oklch(0.27 0.06 155);
+  --link: oklch(0.27 0.06 155);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --accent: oklch(0.87 0.17 95);
+  --accent-foreground: oklch(0.22 0.05 155);
+
+  --background: oklch(0.17 0.025 155);
+  --foreground: oklch(0.96 0.015 100);
+  --surface: oklch(0.215 0.03 155);
+  --overlay: oklch(0.24 0.03 155);
+  --muted: oklch(0.74 0.03 140);
+  --default: oklch(0.28 0.03 155);
+  --default-foreground: oklch(0.96 0.015 100);
+  --field-background: oklch(0.26 0.03 155);
+
+  --success: oklch(0.78 0.15 150);
+  --success-foreground: oklch(0.2 0.04 155);
+
+  --border: oklch(0.32 0.03 155);
+  --separator: oklch(0.3 0.03 155);
+  --focus: var(--accent);
+  --link: var(--accent);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Colores propios de la marca (bloques de color) ── */
+@theme {
+  --color-ink: oklch(0.27 0.06 155);
+  --color-cream: oklch(0.99 0.004 110);
+  --color-leaf: oklch(0.55 0.14 150);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Títulos grandes */
+.display {
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+/* Navbar: al volverse flotante "sale de su escondite" desde arriba */
+@keyframes navbar-drop {
+  from {
+    transform: translateY(-140%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.navbar-drop {
+  animation: navbar-drop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .navbar-drop {
+    animation: none;
+  }
+}
+
+/* Etiqueta pequeña sobre los títulos (no usar "label": choca con HeroUI) */
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
