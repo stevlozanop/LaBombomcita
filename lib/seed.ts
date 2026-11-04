@@ -1,49 +1,8 @@
-// Datos iniciales. Solo se usan la primera vez para crear data/db.json.
-// Después todo se edita desde el panel /superadmindev.
-// Nombre, dirección, delivery y carta tomados de los letreros del local.
+// Datos iniciales del local. Se editan en lib/seed.json.
+// Se usan la primera vez que arranca la web (para crear la base de datos)
+// y, en Vercel sin Redis, cada vez que el servidor se reinicia.
 
 import type { Db } from "./types";
+import data from "./seed.json";
 
-export const seed: Db = {
-  settings: {
-    name: "La Bomboncita",
-    whatsapp: "51942243426",
-    phone: "942 243 426",
-    address: "Jr. Agustín Cauper N° 214",
-    mapsUrl: "https://www.google.com/maps/search/?api=1&query=Cevicher%C3%ADa+La+Bomboncita+Jr.+Agust%C3%ADn+Cauper+214",
-    instagram: "",
-    currency: "S/",
-    ordersOpen: true,
-    payments: ["Efectivo", "Yape", "Plin"],
-  },
-  categories: [
-    { id: "menu-marino", name: "Menú marino" },
-    { id: "combinados", name: "Dúos, tríos y más" },
-  ],
-  dishes: [
-    // Menú marino: todos incluyen entrada de concentrado
-    { id: "mm1", categoryId: "menu-marino", name: "Menú marino 1", desc: "Ceviche + tallarín + chanfainita + leche de tigre. Entrada: concentrado", price: 17, available: true },
-    { id: "mm2", categoryId: "menu-marino", name: "Menú marino 2", desc: "Ceviche + tallarín + chanfainita + huancaína + leche de tigre. Entrada: concentrado", price: 20, available: true },
-    { id: "mm3", categoryId: "menu-marino", name: "Menú marino 3", desc: "Ceviche + tallarín + chanfainita + chicharrón + huancaína + leche de tigre. Entrada: concentrado", price: 25, available: true },
-    { id: "mm4", categoryId: "menu-marino", name: "Menú marino 4", desc: "Ceviche + tallarín + chanfainita + causa + chicharrón + huancaína + leche de tigre. Entrada: concentrado", price: 30, available: true },
-    { id: "mm5", categoryId: "menu-marino", name: "Menú marino 5", desc: "Ceviche + tallarín + chanfainita + papa rellena + chicharrón + huancaína + leche de tigre. Entrada: concentrado", price: 30, available: true },
-
-    // Combinados
-    { id: "cb1", categoryId: "combinados", name: "Ceviche carretillero", desc: "Ceviche + chicharrón de pota + leche de tigre + concentrado", price: 15, available: true },
-    { id: "cb2", categoryId: "combinados", name: "Dúo marino 1", desc: "Ceviche + chicharrón, o leche de tigre + chilcano", price: 20, available: true },
-    { id: "cb3", categoryId: "combinados", name: "Dúo marino 2", desc: "Ceviche + arroz con mariscos, o ceviche + chaufa de mariscos", price: 20, available: true },
-    { id: "cb4", categoryId: "combinados", name: "Dúo marino 3", desc: "Ceviche + causa, ceviche + papa rellena, chicharrón + arroz con mariscos o chicharrón + chaufa de mariscos", price: 20, available: true },
-    { id: "cb5", categoryId: "combinados", name: "Trío marino 1", desc: "Ceviche + chicharrón + arroz con mariscos, o ceviche + chicharrón + chaufa de mariscos", price: 25, available: true },
-    { id: "cb6", categoryId: "combinados", name: "Trío marino 2", desc: "Ceviche + chicharrón o arroz con mariscos, con causa o papa rellena", price: 30, available: true },
-    { id: "cb7", categoryId: "combinados", name: "Ronda marina", desc: "Ceviche + chicharrón + arroz con mariscos + causa o papa rellena", price: 40, available: true },
-  ],
-  hours: [
-    { id: "h1", day: "Lunes", time: "Cerrado" },
-    { id: "h2", day: "Martes — Viernes", time: "11:00 — 17:00" },
-    { id: "h3", day: "Sábado", time: "10:30 — 17:30" },
-    { id: "h4", day: "Domingo", time: "10:30 — 17:00" },
-  ],
-  orders: [],
-  activity: [],
-  nextOrder: 1,
-};
+export const seed = data as Db;

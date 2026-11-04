@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { hasRedis, redis } from "./redis";
 import { seed } from "./seed";
@@ -9,15 +10,21 @@ import type { Db } from "./types";
 export * from "./types";
 
 // ── Dónde se guardan los datos ─────────────────────
-// · Con Upstash Redis configurado (Vercel): en la base de datos.
-// · Sin Redis (tu computadora o un VPS): en el archivo data/db.json.
+// · Con Upstash Redis configurado: en la base de datos (permanente).
+// · Sin Redis, en tu computadora o un VPS: en el archivo data/db.json.
+// · Sin Redis, en Vercel: en un JSON de la carpeta temporal del servidor.
+//   Funciona, pero los cambios se borran cuando Vercel reinicia el servidor
+//   y vuelven los datos de lib/seed.json.
 
 type Loaded = { db: Db; version: string };
 
 const withSeed = (data: Partial<Db>): Db => ({ ...structuredClone(seed), ...data });
 
 // ── Archivo JSON ──
-const FILE = path.join(process.cwd(), "data", "db.json");
+export const isTemporaryStorage = Boolean(process.env.VERCEL) && !hasRedis;
+const FILE = isTemporaryStorage
+  ? path.join(os.tmpdir(), "bomboncita-db.json")
+  : path.join(process.cwd(), "data", "db.json");
 
 const file = {
   async load(): Promise<Loaded> {
@@ -25,18 +32,12 @@ const file = {
       return { db: withSeed(JSON.parse(await readFile(FILE, "utf8"))), version: "file" };
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
-      // En Vercel no se puede escribir en disco: se muestran los datos iniciales
-      // (solo lectura) hasta que se conecte Upstash Redis.
-      if (process.env.VERCEL) return { db: structuredClone(seed), version: "file" };
       const db = structuredClone(seed);
       await file.save(db);
       return { db, version: "file" };
     }
   },
   async save(db: Db): Promise<boolean> {
-    if (process.env.VERCEL) {
-      throw new Error("Para guardar cambios en Vercel hay que conectar Upstash Redis (Storage).");
-    }
     await mkdir(path.dirname(FILE), { recursive: true });
     const tmp = `${FILE}.${randomUUID()}.tmp`;
     await writeFile(tmp, JSON.stringify(db, null, 2));
